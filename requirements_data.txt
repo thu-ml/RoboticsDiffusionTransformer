@@ -1,0 +1,9 @@
+tfds-nightly==4.9.4.dev202402070044
+gsutil==5.27
+tensorflow==2.15.0.post1
+pillow==10.2.0
+pyyaml==6.0.1
+opencv-python==4.9.0.80
+tensorflow-graphics==2021.12.3
+imageio==2.34.0
+imageio-ffmpeg==0.4.9
