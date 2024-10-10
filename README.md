@@ -185,17 +185,17 @@ We provide an example hardware code in [this file](scripts/agilex_inference.py) 
 
 **IMPORTANT**: If you on-board GPU memory is not enough to encode the language, please refer to [this file](scripts/encode_lang.py) for precomputation and specify the language embedding path in `inference.sh`.
 
-Note: If you want to deploy on Mobile ALOHA robot, don't forget to install prerequisites of hardware (see [this repo](https://github.com/MarkFzp/mobile-aloha)).
+Note: If you want to deploy on the Mobile ALOHA robot, don't forget to install the hardware prerequisites (see [this repo](https://github.com/MarkFzp/mobile-aloha)).
 
-## Citation
+<!-- ## Citation -->
 
-If you find our work useful, please cite us:
+<!-- If you find our work useful, please cite us:
 
 ```bibtex
 
 ```
 
-Thank you!
+Thank you!-->
 
 ## License
 
