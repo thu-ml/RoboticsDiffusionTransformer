@@ -61,6 +61,17 @@ The following guides include the [installation](#installation), [fine-tuning](#f
    ln -s /path/to/t5-v1_1-xxl google/t5-v1_1-xxl
    ln -s /path/to/siglip-so400m-patch14-384 google/siglip-so400m-patch14-384
    ```
+3. Fill in the missing argument in `configs/base.yaml`
+
+   ```
+   # ...
+
+   dataset:
+   # ...
+   # ADD YOUR buf_path: the path to the buffer (at least 400GB)
+      buf_path: /path/to/buffer
+   # ...
+   ```
 
 ## Fine-Tuning on Your Own Dataset
 
