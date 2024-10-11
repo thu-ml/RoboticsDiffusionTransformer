@@ -52,11 +52,10 @@ base_model: {base_model}
 language:
 - en
 pipeline_tag: robotics
-library_name: diffusers
+library_name: transformers
 tags:
 - robotics
 - pytorch
-- diffusers
 - multimodal
 - pretraining
 - vla
