@@ -1,6 +1,6 @@
 # Pipeline of Pre-Training RDT
 
-Firstly, you need to install the prerequisites for RDT (see *Installation* in [README](../README.md)). Then, you can install the prerequisites for TensorFlow Dataset (in another Conda environment).
+Firstly, you need to install the prerequisites for RDT (see [README](../README.md#installation)). Then, you can install the prerequisites for TensorFlow Dataset (in another Conda environment).
 
 ## Installation for TensorFlow Dataset
 
@@ -73,12 +73,12 @@ We introduce how to download each of our pre-training datasets. If you plan to p
 Before everything, let's link the dataset directory on your disk to a subfolder of this repo:
 
 ```bash
-ln -s /path/to/dataset /path/to/project/robotics-diffusion-transformer/data/datasets
+ln -s /path/to/dataset /path/to/repo/RoboticsDiffusionTransformer/data/datasets
 ```
 
 ### Open X-Embodiment
 
-Specify the correct path to the `gsutil` in your Conda in L72 in [this file](../data/openx_embod/download.sh).
+Specify the correct path to the `gsutil` in your Conda in [this file](../data/openx_embod/download.sh#L72).
 
 Run the following commands to download our selected datasets for the Open X-Embodiment:
 
@@ -154,7 +154,7 @@ Add the control frequency of your dataset.
 
 ##### 2. `data/preprocess_scripts/my_pretrain_dataset.py`
 
-If your dataset can be loaded by `tfds.builder_from_directory()`, then you only need to download it into the folder of Open X-Embodiment `data/datasets/openx_embod` and implement the function of `process_step()`. You may need to specify the tfds loading path in L78 (see [this file](../data/vla_dataset.py)). We refer to `data/preprocess_scripts/droid.py` for an example.
+If your dataset can be loaded by `tfds.builder_from_directory()`, then you only need to download it into the folder of Open X-Embodiment `data/datasets/openx_embod` and implement the function of `process_step()`. You may need to specify the tfds loading path in L78 (see [this file](../data/vla_dataset.py#L78)). We refer to `data/preprocess_scripts/droid.py` for an example.
 
 If not, you need to first convert it into TFRecords and then implement both `load_dataset()` and `process_step()`. We refer to `data/agilex/hdf5totfrecords.py` and `data/preprocess_scripts/agilex.py` for examples.
 
@@ -247,7 +247,7 @@ We employ a producer-consumer framework with TensorFlow Dataset for fast data lo
 
 [This file](../configs/base.yaml) includes configurations relevant to model architecture (including number of heads, hidden dimension, and so on) and data processing. You may need to modify `buf_path` (L22) to your real buffer path. This buffer is used as disk shuffling buffer for data loading. 
 
-Configurations relevant to training are passed through *Command Line Arguments*. Use `python main.py -h ` to see the descriptions. We provide an example pre-training script in [this file](../pretrain.sh) (`pretrain.sh`). You may need to modify some of the parameters in this file, such as `OUTPUT_DIR`, `CUTLASS_PATH`, and `WANDB_PROJECT`.
+Configurations relevant to training are passed through *Command Line Arguments*. Use `python main.py -h ` to see the descriptions. We provide an example pre-training script in [this file](../pretrain.sh) (`pretrain.sh`). You may need to modify some of the parameters in this file, such as `CUTLASS_PATH` and `WANDB_PROJECT`.
 
 You may need to modify the list of pre-training datasets in [this file](../configs/pretrain_datasets.json) and their corresponding sampling weights in [this file](../configs/pretrain_sample_weights.json). If you want to fine-tune RDT through this pipeline, you may need to remove abundant datasets in the list.
 
