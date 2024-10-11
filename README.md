@@ -62,6 +62,7 @@ The following guides include the [installation](#installation), [fine-tuning](#f
    ln -s /path/to/siglip-so400m-patch14-384 google/siglip-so400m-patch14-384
    ```
 3. Fill the missing argument in [this file](configs/base.yaml#L22):
+   
    Note that this buffer will only be used during pre-training. See [this doc](docs/pretrain.md) for more details.
    ```
    # ...
