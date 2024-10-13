@@ -199,15 +199,20 @@ We provide an example hardware code in [this file](scripts/agilex_inference.py) 
 
 Note: If you want to deploy on the Mobile ALOHA robot, don't forget to install the hardware prerequisites (see [this repo](https://github.com/MarkFzp/mobile-aloha)).
 
-<!-- ## Citation -->
+## Citation
 
-<!-- If you find our work useful, please cite us:
+If you find our work helpful, please cite us:
 
 ```bibtex
-
+@article{liu2024rdt,
+  title={RDT-1B: a Diffusion Foundation Model for Bimanual Manipulation},
+  author={Liu, Songming and Wu, Lingxuan and Li, Bangguo and Tan, Hengkai and Chen, Huayu and Wang, Zhengyi and Xu, Ke and Su, Hang and Zhu, Jun},
+  journal={arXiv preprint arXiv:2410.07864},
+  year={2024}
+}
 ```
 
-Thank you!-->
+Thank you!
 
 ## License
 
