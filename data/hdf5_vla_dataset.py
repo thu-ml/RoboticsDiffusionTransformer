@@ -43,7 +43,7 @@ class HDF5VLADataset:
         self.episode_sample_weights = np.array(episode_lens) / np.sum(episode_lens)
     
     def __len__(self):
-        return self.BUFFER_SIZE
+        return len(self.file_paths)
     
     def get_dataset_name(self):
         return self.DATASET_NAME
