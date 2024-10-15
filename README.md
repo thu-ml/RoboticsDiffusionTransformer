@@ -66,7 +66,7 @@ The following guides include the [installation](#installation), [fine-tuning](#f
    Note that this buffer will only be used during pre-training. See [this doc](docs/pretrain.md) for more details.
    ```
    # ...
-
+   
    dataset:
    # ...
    # ADD YOUR buf_path: the path to the buffer (at least 400GB)
@@ -124,7 +124,7 @@ If your fine-tuning dataset is in the [Open X-Embodiment](https://robotics-trans
       ```bash
       # Under the root directory of this repo
       # Use -h to see the full usage
-      python -m data.compute_dataset_stat --dataset_type="finetune" --hdf5_dataset
+      python -m data.compute_dataset_stat_hdf5
       ```
 
 3. Start fine-tuning:
