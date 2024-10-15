@@ -202,7 +202,6 @@ class HDF5VLADataset:
             actions = fill_in_state(actions)
             
             # Parse the images
-            # For unavailable images, use zero-shape arrays, e.g., (IMG_HISORY_SIZE, 0, 0, 0)
             def parse_img(key):
                 imgs = []
                 for i in range(max(step_id-self.IMG_HISORY_SIZE+1, 0), step_id+1):
@@ -229,6 +228,9 @@ class HDF5VLADataset:
             cam_right_wrist_mask = cam_high_mask.copy()
             
             # Return the resulting sample
+            # For unavailable images, return zero-shape arrays, i.e., (IMG_HISORY_SIZE, 0, 0, 0)
+            # E.g., return np.zeros((self.IMG_HISORY_SIZE, 0, 0, 0)) for the key "cam_left_wrist",
+            # if the left-wrist camera is unavailable on your robot
             return True, {
                 "meta": meta,
                 "state": state,
