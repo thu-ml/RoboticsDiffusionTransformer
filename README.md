@@ -195,7 +195,33 @@ We provide an example hardware code in [this file](scripts/agilex_inference.py) 
          --ctrl_freq=25    # your control frequency
    ```
 
-**IMPORTANT**: If your on-board GPU memory is not enough to encode the language, please refer to [this file](scripts/encode_lang.py) for precomputation and specify the language embedding path in `inference.sh`.
+**IMPORTANT**: If you on-board GPU memory is not enough to encode the language, please refer to [this file](scripts/encode_lang.py) for precomputation and specify the language embedding path in `inference.sh`. Detail instructions are provided below:
+
+   1. Set Required Parameters in `scripts/encode_lang.py`
+
+      ```python
+      # ...
+
+      GPU = 0
+      MODEL_PATH = "google/t5-v1_1-xxl"
+      CONFIG_PATH = "configs/base.yaml"
+      SAVE_DIR = "outs/"   # output directory
+
+      # Modify this to your task name and instruction
+      TASK_NAME = "handover_pan"
+      INSTRUCTION = "Pick up the black marker on the right and put it into the packaging box on the left."
+
+      # Note: if your GPU VRAM is less than 24GB, 
+      # it is recommanded to enable offloading by specifying an offload directory. 
+      OFFLOAD_DIR = None  # Specify your offload directory here, ensuring the directory exists.
+
+      # ...
+      ```
+
+   2. Run the scipt
+      ```
+      python -m scripts.encode_lang
+      ```
 
 Note: If you want to deploy on the Mobile ALOHA robot, don't forget to install the hardware prerequisites (see [this repo](https://github.com/MarkFzp/mobile-aloha)).
 
