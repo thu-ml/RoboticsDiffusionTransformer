@@ -11,7 +11,7 @@ We have fine-tuned RDT on **6K+** (one of the *largest*) self-collected bimanual
 This repo is an official PyTorch implementation of RDT, containing:
 
 - 🛠️Model [implementation](models/rdt_runner.py) of RDT
-- 🤗1M-step [checkpoint](https://huggingface.co/robotics-diffusion-transformer/rdt-1b) of the pre-trained RDT-1B
+- 🤗1M-step [checkpoint](https://huggingface.co/robotics-diffusion-transformer/rdt-1b) of RDT-1B pre-trained on multi-robot data 
 - 📈Training and sampling [scripts](train/train.py) (with DeepSpeed)
 - 🤖An [example](scripts/agilex_inference.py) of real-robot deployment
 
