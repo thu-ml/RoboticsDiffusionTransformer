@@ -32,8 +32,8 @@ def _parse_function(proto):
     rgb_static = tf.reshape(rgb_static, [200, 200, 3])
     rgb_gripper = tf.reshape(rgb_gripper, [84, 84, 3])
     # RGB to BGR
-    rgb_static = rgb_static[:, :, ::-1]
-    rgb_gripper = rgb_gripper[:, :, ::-1]
+    # rgb_static = rgb_static[:, :, ::-1]
+    # rgb_gripper = rgb_gripper[:, :, ::-1]
     
     return {
         'action': action,
