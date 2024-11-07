@@ -229,6 +229,44 @@ We provide an example hardware code in [this file](scripts/agilex_inference.py) 
 
 Note: If you want to deploy on the Mobile ALOHA robot, don't forget to install the hardware prerequisites (see [this repo](https://github.com/MarkFzp/mobile-aloha)).
 
+## Deployment on SimplerEnv
+   1. Set Required Parameters in `scripts/encode_lang.py`
+
+      ```python
+      # ...
+
+      GPU = 0
+      MODEL_PATH = "google/t5-v1_1-xxl"
+      CONFIG_PATH = "configs/base.yaml"
+      SAVE_DIR = "outs/"   # output directory
+
+      # Modify this to your task name and instruction
+      TASK_NAME = "widowx_pick_up_the_spoon"
+      INSTRUCTION = "put the spoon on the towel."
+
+      # Note: if your GPU VRAM is less than 24GB, 
+      # it is recommanded to enable offloading by specifying an offload directory. 
+      OFFLOAD_DIR = None  # Specify your offload directory here, ensuring the directory exists.
+
+      # ...
+      ```
+
+   2. Run the scipt
+      ```
+      python -m scripts.encode_lang
+      ```
+
+   3. Run the inference script
+      ```bash
+        python -m scripts.simplerenv_inference \
+          --config_path configs/base.yaml \
+          --pretrained_model_name_or_path robotics-diffusion-transformer/rdt-1b \ # or robotics-diffusion-transformer/rdt-170m
+          --lang_embeddings_path <PATH TO YOUR INSTURCTION EMBEDDINGS> \ # e.g. outs/widowx_pick_up_the_spoon.pt
+          --ctrl_freq 5 \
+          --chunk_size 64 \
+          --env_name widowx_spoon_on_towel
+      ```
+
 ## Citation
 
 If you find our work helpful, please cite us:
