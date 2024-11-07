@@ -188,7 +188,10 @@ class VLAConsumerDataset(Dataset):
         raise RuntimeError("Failed to load sample.")
 
     def __len__(self) -> int:
-        return self.num_chunks * self.chunk_size
+        if self.use_hdf5:
+            return len(self.hdf5_dataset)
+        else:
+            return self.num_chunks * self.chunk_size
 
     def _safe_load(self, index):
         read_chunk_item_indices = []
