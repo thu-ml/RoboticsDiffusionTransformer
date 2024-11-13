@@ -11,7 +11,7 @@ conda activate rdt-data
 
 # Install all the prequisites
 pip install -r requirements_data.txt
-# Or you can manually install each package
+# Or you can manually install each package (please refer to requirements_data.txt for specific versions) 
 pip install tfds-nightly gsutil tensorflow Pillow pyyaml opencv-python tensorflow-graphics imageio[ffmpeg]
 # If the speed is too slow, you can specify alternative sources (tfds-nightly is not available in Tsinghua mirror)
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple gsutil tensorflow Pillow pyyaml opencv-python tensorflow-graphics imageio[ffmpeg]
