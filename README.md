@@ -248,6 +248,10 @@ Note: If you want to deploy on the Mobile ALOHA robot, don't forget to install t
 - **Enable Gradient Checkpointing**: Implement `gradient_checkpointing` manually to save memory during backpropagation. See [here](https://deepspeed.readthedocs.io/en/latest/activation-checkpointing.html) for instructions. Once you have successfully implemented this feature, we welcome you to submit a PR👏.
 - **Gradient Accumulation**: Set a larger `--gradient_accumulation_steps=<num_steps>`. This will accumulate the gradients of `<num_steps>` batches for backpropagation. Equivalently, this will increase the batch size by `<num_steps>` times, at the cost of `<num_steps>` times the running time.
 
+### 2. How many steps are recommended for fine-tuning RDT?
+
+Regardless of the batch size you select, it is recommended to train for at least 150K steps to achieve optimal results.
+
 ## Citation
 
 If you find our work helpful, please cite us:
