@@ -14,6 +14,9 @@ CONFIG_PATH = "configs/base.yaml"
 # Modify the TARGET_DIR to your dataset path
 TARGET_DIR = "data/datasets/agilex/tfrecords/"
 
+# Note: if your GPU VRAM is less than 24GB, 
+# it is recommended to enable offloading by specifying an offload directory.
+OFFLOAD_DIR = None  # Specify your offload directory here, ensuring the directory exists.
 
 def main():
     with open(CONFIG_PATH, "r") as fp:
@@ -23,7 +26,8 @@ def main():
     text_embedder = T5Embedder(
         from_pretrained=MODEL_PATH, 
         model_max_length=config["dataset"]["tokenizer_max_length"], 
-        device=device
+        device=device,
+        use_offload_folder=OFFLOAD_DIR
     )
     tokenizer, text_encoder = text_embedder.tokenizer, text_embedder.model
     
