@@ -16,7 +16,7 @@ TASK_NAME = "handover_pan"
 INSTRUCTION = "Pick up the black marker on the right and put it into the packaging box on the left."
 
 # Note: if your GPU VRAM is less than 24GB, 
-# it is recommanded to enable offloading by specifying an offload directory.
+# it is recommended to enable offloading by specifying an offload directory.
 OFFLOAD_DIR = None  # Specify your offload directory here, ensuring the directory exists.
 
 def main():
