@@ -216,7 +216,7 @@ We provide an example hardware code in [this file](scripts/agilex_inference.py) 
       INSTRUCTION = "Pick up the black marker on the right and put it into the packaging box on the left."
 
       # Note: if your GPU VRAM is less than 24GB, 
-      # it is recommanded to enable offloading by specifying an offload directory. 
+      # it is recommended to enable offloading by specifying an offload directory. 
       OFFLOAD_DIR = None  # Specify your offload directory here, ensuring the directory exists.
 
       # ...
@@ -251,6 +251,12 @@ Note: If you want to deploy on the Mobile ALOHA robot, don't forget to install t
 ### 2. How many steps are recommended for fine-tuning RDT?
 
 Regardless of the batch size you select, it is recommended to train for at least 150K steps to achieve optimal results.
+
+### 3. What to do if t5-xxL is too large to store in GPU memory?
+
+1. Do not load T5-XXL in your GPU memory when training. Pre-compute language embeddings in advance.
+2. Set `OFFLOAD_DIR` to enable CPU offloading in `scripts/encode_lang_batch.py` and `scripts/encode_lang.py`.
+3. Use smaller versions of t5 like t5-base instead of t5-xxL.
 
 ## Citation
 
