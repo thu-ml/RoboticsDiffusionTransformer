@@ -247,8 +247,8 @@ We comprehensively evaluate RDT against baseline methods using the ManiSkill sim
    Follow the [ManiSkill documentation](https://maniskill.readthedocs.io/en/latest/user_guide/getting_started/installation.html#vulkan) to properly set up Vulkan。
 
 3. **Obtain Model Weights:**  
-   Download and extract the fine-tuned model weights from [this Hugging Face repository](https://huggingface.co/robotics-diffusion-transformer/maniskill-model/tree/main/rdt).
-
+   Download and extract the fine-tuned model weights from [this Hugging Face repository](https://huggingface.co/robotics-diffusion-transformer/maniskill-model/tree/main/rdt). Download the precomputed language embeddings from [here](https://huggingface.co/robotics-diffusion-transformer/maniskill-model/tree/main/lang_embeds) to the root directory of this repo.
+   
 4. **Run Evaluation Scripts:**  
    After completing the setup steps, execute the provided evaluation scripts to assess RDT on the selected tasks.
 
