@@ -114,9 +114,9 @@ def resize_img(image, size=(256, 256)):
     resized_img = resized_tf.numpy().astype(np.uint8)
     return resized_img
 
-MAX_EPISODE_STEPS = 150  # 每个episode的最大步数
-total_episodes = args.num_traj  # 总的测试次数
-success_count = 0  # 成功次数
+MAX_EPISODE_STEPS = 400
+total_episodes = args.num_traj 
+success_count = 0 
 base_seed = 20241201
 import tqdm
 
