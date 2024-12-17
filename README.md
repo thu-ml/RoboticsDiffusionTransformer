@@ -15,6 +15,7 @@ This repo is an official PyTorch implementation of RDT, containing:
 - 🤗500K-step [checkpoint](https://huggingface.co/robotics-diffusion-transformer/rdt-170m) of RDT-170M (RDT(small) in [ablation](https://arxiv.org/pdf/2410.07864))
 - 📈Training and sampling [scripts](train/train.py) (with DeepSpeed)
 - 🤖An [example](scripts/agilex_inference.py) of real-robot deployment
+- 🕹️Simulation benchmark from [Maniskill](https://github.com/haosulab/ManiSkill) environment
 
 The following guides include the [installation](#installation), [fine-tuning](#fine-tuning-on-your-own-dataset), and [deployment](#deployment-on-real-robots). Please refer to [pre-training](docs/pretrain.md) for a detailed list of pre-training datasets and a pre-training guide.
 
