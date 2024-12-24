@@ -84,7 +84,7 @@ else:
     text_embed = policy.encode_instruction(task2lang[env_id])
     torch.save(text_embed, f'text_embed_{env_id}.pt')
 
-MAX_EPISODE_STEPS = 200 
+MAX_EPISODE_STEPS = 400 
 total_episodes = args.num_traj  
 success_count = 0  
 
