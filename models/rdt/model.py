@@ -100,13 +100,13 @@ class RDT(nn.Module):
         
         if self.img_pos_embed_config is None:
             img_cond_pos_embed = get_1d_sincos_pos_embed_from_grid(
-                self.hidden_size, torch.arange(self.img_cond_len))
+                self.hidden_size, torch.arange(self.img_cond_len)) # torch.Size([1, 4374, 2048]) 
         else:
             img_cond_pos_embed = get_multimodal_cond_pos_embed(
                 embed_dim=self.hidden_size,
                 mm_cond_lens=OrderedDict(self.img_pos_embed_config),
                 embed_modality=False
-            )
+            ) # torch.Size([1, 4374, 2048])
         self.img_cond_pos_embed.data.copy_(
             torch.from_numpy(img_cond_pos_embed).float().unsqueeze(0))
 
@@ -148,8 +148,9 @@ class RDT(nn.Module):
         # Add multimodal position embeddings
         x = x + self.x_pos_embed
         # Note the lang is of variable length
-        lang_c = lang_c + self.lang_cond_pos_embed[:, :lang_c.shape[1]]
-        img_c = img_c + self.img_cond_pos_embed
+        lang_c = lang_c #+ self.lang_cond_pos_embed[:, :lang_c.shape[1]]
+        
+        img_c = img_c #+ self.img_cond_pos_embed
 
         # Forward pass
         conds = [lang_c, img_c]
