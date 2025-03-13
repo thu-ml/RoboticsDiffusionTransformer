@@ -93,12 +93,12 @@ Note: By modifying `download_openx_embod.sh`,  you can download any dataset on t
 
 ### Mobile ALOHA Dataset
 
-Download the Mobile ALOHA Dataset from the [official website](https://mobile-aloha.github.io) to `data/datasets/aloha`, then run:
+Download our processed Mobile ALOHA Dataset from [here](https://huggingface.co/datasets/robotics-diffusion-transformer/aloha-data) to `data/datasets/aloha`, then run:
 
 ```bash
 cd data/aloha
-# Convert the dataset to TFRecord
-python hdf5totfrecords.py
+cat tfrecord_part_a* > tfrecord_part_a.zip
+unzip tfrecord_part_a.zip
 ```
 
 ### Bridgev2
