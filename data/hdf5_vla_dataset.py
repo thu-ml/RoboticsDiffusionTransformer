@@ -2,9 +2,10 @@ import os
 import fnmatch
 import json
 
-import h5py
+# import h5py
 import yaml
 import cv2
+import pickle
 import numpy as np
 
 from configs.state_vec import STATE_VEC_IDX_MAPPING
@@ -18,12 +19,12 @@ class HDF5VLADataset:
     def __init__(self) -> None:
         # [Modify] The path to the HDF5 dataset directory
         # Each HDF5 file contains one episode
-        HDF5_DIR = "data/datasets/agilex/rdt_data/"
-        self.DATASET_NAME = "agilex"
+        HDF5_DIR = "data/datasets/redbird50_0325"
+        self.DATASET_NAME = "redbird50_0325"
         
         self.file_paths = []
         for root, _, files in os.walk(HDF5_DIR):
-            for filename in fnmatch.filter(files, '*.hdf5'):
+            for filename in fnmatch.filter(files, '*.pkl'):
                 file_path = os.path.join(root, filename)
                 self.file_paths.append(file_path)
                 
@@ -112,6 +113,150 @@ class HDF5VLADataset:
                     "cam_right_wrist_mask": ndarray
                 } or None if the episode is invalid.
         """
+        # Load the .pkl file
+        with open(file_path, 'rb') as f:
+            data = pickle.load(f)
+            num_steps = len(data["timestamp"])
+            # [Optional] We drop too-short episode
+            if num_steps < 128:
+                return False, None
+            
+            q = data["get_current_joint_q"]
+            q = np.array(q)
+
+            eef = data['get_current_end']
+            eef = [0 if eef[i] < 0.05 else 1 if eef[i] > 0.95 else eef[i] for i in range(len(eef))]
+            eef = np.array(eef).reshape(-1, 1)
+            qpos = np.concatenate([q, eef], axis=1)
+
+            # [Optional] We skip the first few still steps
+            # Get the idx of the first qpos whose delta exceeds the threshold
+            EPS = 1e-2
+            qpos_delta = np.abs(qpos - qpos[0:1])
+            indices = np.where(np.any(qpos_delta > EPS, axis=1))[0]
+            if len(indices) > 0:
+                first_idx = indices[0]
+            else:
+                raise ValueError("Found no qpos that exceeds the threshold.")
+            
+            # We randomly sample a timestep
+            step_id = np.random.randint(first_idx-1, num_steps)
+
+            # Load the instruction
+            # dir_path = os.path.dirname(file_path)
+            # with open(os.path.join(dir_path, 'expanded_instruction_gpt-4-turbo.json'), 'r') as f_instr:
+            #     instruction_dict = json.load(f_instr)
+            # We have 1/3 prob to use original instruction,
+            # 1/3 to use simplified instruction,
+            # and 1/3 to use expanded instruction.
+            # instruction_type = np.random.choice([
+            #     'instruction', 'simplified_instruction', 'expanded_instruction'])
+            # instruction = instruction_dict[instruction_type]
+            # if isinstance(instruction, list):
+            #     instruction = np.random.choice(instruction)
+            # You can also use precomputed language embeddings (recommended)
+            instruction_type = np.random.choice([0, 1, 2])
+            instruction = f"data/datasets/redbird50_0325/lang_embed_{str(instruction_type)}.pt"
+            if not os.path.exists(instruction):
+                raise FileNotFoundError(f"Instruction file not found: {instruction}")
+            
+            # Assemble the meta
+            meta = {
+                "dataset_name": self.DATASET_NAME,
+                "#steps": num_steps,
+                "step_id": step_id,
+                "instruction": instruction
+            }
+
+            target_qpos = qpos[1:self.CHUNK_SIZE+1]
+            
+            # Parse the state and action
+            state = qpos[step_id:step_id+1]
+            state_std = np.std(qpos, axis=0)
+            state_mean = np.mean(qpos, axis=0)
+            state_norm = np.sqrt(np.mean(qpos**2, axis=0))
+            actions = target_qpos
+            if actions.shape[0] < self.CHUNK_SIZE:
+                # Pad the actions using the last action
+                actions = np.concatenate([
+                    actions,
+                    np.tile(actions[-1:], (self.CHUNK_SIZE-actions.shape[0], 1))
+                ], axis=0)
+            
+            # Fill the state/action into the unified vector
+            def fill_in_state(values):
+                # Target indices corresponding to your state space
+                # In this example: 6 joints + 1 gripper for each arm
+                UNI_STATE_INDICES = [
+                #     STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
+                # ] + [
+                #     STATE_VEC_IDX_MAPPING["left_gripper_open"]
+                # ] + [
+                    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
+                ] + [
+                    STATE_VEC_IDX_MAPPING["right_gripper_open"]
+                ]
+                uni_vec = np.zeros(values.shape[:-1] + (self.STATE_DIM,))
+                uni_vec[..., UNI_STATE_INDICES] = values
+                return uni_vec
+            state = fill_in_state(state)
+            state_indicator = fill_in_state(np.ones_like(state_std))
+            state_std = fill_in_state(state_std)
+            state_mean = fill_in_state(state_mean)
+            state_norm = fill_in_state(state_norm)
+            # If action's format is different from state's,
+            # you may implement fill_in_action()
+            actions = fill_in_state(actions)
+            
+            # Parse the images
+            def parse_img():
+                imgs = []
+                for i in range(max(step_id-self.IMG_HISORY_SIZE+1, 0), step_id+1):
+                    img = np.array(data["color_image"][i])
+                    # img = np.transpose(img, (2, 0, 1))  # HWC to CHW
+                    # print(img.shape)
+                    imgs.append(img.astype(np.uint8))
+                imgs = np.stack(imgs)
+                if imgs.shape[0] < self.IMG_HISORY_SIZE:
+                    # Pad the images using the first image
+                    imgs = np.concatenate([
+                        np.tile(imgs[:1], (self.IMG_HISORY_SIZE-imgs.shape[0], 1, 1, 1)),
+                        imgs
+                    ], axis=0)
+                return imgs
+            # `cam_high` is the external camera image
+            cam_high = parse_img()
+            # For step_id = first_idx - 1, the valid_len should be one
+            valid_len = min(step_id - (first_idx - 1) + 1, self.IMG_HISORY_SIZE)
+            cam_high_mask = np.array(
+                [False] * (self.IMG_HISORY_SIZE - valid_len) + [True] * valid_len
+            )
+            cam_left_wrist = np.zeros((self.IMG_HISORY_SIZE, 0, 0, 0))
+            cam_left_wrist_mask = [False] * self.IMG_HISORY_SIZE
+            cam_right_wrist = np.zeros((self.IMG_HISORY_SIZE, 0, 0, 0))
+            cam_right_wrist_mask = [False] * self.IMG_HISORY_SIZE
+            
+            # Return the resulting sample
+            # For unavailable images, return zero-shape arrays, i.e., (IMG_HISORY_SIZE, 0, 0, 0)
+            # E.g., return np.zeros((self.IMG_HISORY_SIZE, 0, 0, 0)) for the key "cam_left_wrist",
+            # if the left-wrist camera is unavailable on your robot
+            return True, {
+                "meta": meta,
+                "state": state,
+                "state_std": state_std,
+                "state_mean": state_mean,
+                "state_norm": state_norm,
+                "actions": actions,
+                "state_indicator": state_indicator,
+                "cam_high": cam_high,
+                "cam_high_mask": cam_high_mask,
+                "cam_left_wrist": cam_left_wrist,
+                "cam_left_wrist_mask": cam_left_wrist_mask,
+                "cam_right_wrist": cam_right_wrist,
+                "cam_right_wrist_mask": cam_right_wrist_mask
+            }
+
+        """# [Original] hdf5 file parser by the RDT-1B authors.
         with h5py.File(file_path, 'r') as f:
             qpos = f['observations']['qpos'][:]
             num_steps = qpos.shape[0]
@@ -246,6 +391,7 @@ class HDF5VLADataset:
                 "cam_right_wrist": cam_right_wrist,
                 "cam_right_wrist_mask": cam_right_wrist_mask
             }
+        """
 
     def parse_hdf5_file_state_only(self, file_path):
         """[Modify] Parse a hdf5 file to generate a state trajectory.
@@ -262,6 +408,65 @@ class HDF5VLADataset:
                     "action": ndarray,          # action[:], (T, STATE_DIM).
                 } or None if the episode is invalid.
         """
+        # Load the .pkl file
+        with open(file_path, 'rb') as f:
+            data = pickle.load(f)
+            num_steps = len(data["timestamp"])
+            if num_steps < 128:
+                return False, None
+            
+            q = data["get_current_joint_q"]
+            q = np.array(q)
+
+            eef = data['get_current_end']
+            eef = [0 if eef[i] < 0.05 else 1 if eef[i] > 0.95 else eef[i] for i in range(len(eef))]
+            eef = np.array(eef).reshape(-1, 1)
+            qpos = np.concatenate([q, eef], axis=1)
+
+            # [Optional] We skip the first few still steps
+            # Get the idx of the first qpos whose delta exceeds the threshold
+            EPS = 1e-2
+            qpos_delta = np.abs(qpos - qpos[0:1])
+            indices = np.where(np.any(qpos_delta > EPS, axis=1))[0]
+            if len(indices) > 0:
+                first_idx = indices[0]
+            else:
+                raise ValueError("Found no qpos that exceeds the threshold.")
+            
+            # Parse the state and action
+            action = qpos[first_idx:]
+            
+            state_1 = action[:-1]
+            state_0 = qpos[first_idx-1].reshape(1, -1)
+            state = np.concatenate([state_0, state_1], axis=0)
+            
+            # Fill the state/action into the unified vector
+            def fill_in_state(values):
+                # Target indices corresponding to your state space
+                # In this example: 6 joints + 1 gripper for each arm
+                UNI_STATE_INDICES = [
+                #     STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
+                # ] + [
+                #     STATE_VEC_IDX_MAPPING["left_gripper_open"]
+                # ] + [
+                    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
+                ] + [
+                    STATE_VEC_IDX_MAPPING["right_gripper_open"]
+                ]
+                uni_vec = np.zeros(values.shape[:-1] + (self.STATE_DIM,))
+                uni_vec[..., UNI_STATE_INDICES] = values
+                return uni_vec
+            state = fill_in_state(state)
+            action = fill_in_state(action)
+            
+            # Return the resulting sample
+            return True, {
+                "state": state,
+                "action": action
+            }
+
+        """# [Original] hdf5 file parser by the RDT-1B authors.
+        # Process the loaded data if necessary
         with h5py.File(file_path, 'r') as f:
             qpos = f['observations']['qpos'][:]
             num_steps = qpos.shape[0]
@@ -315,8 +520,10 @@ class HDF5VLADataset:
                 "state": state,
                 "action": action
             }
+        """
 
 if __name__ == "__main__":
+    print("Testing HDF5VLADataset...")
     ds = HDF5VLADataset()
     for i in range(len(ds)):
         print(f"Processing episode {i}/{len(ds)}...")

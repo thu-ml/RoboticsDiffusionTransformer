@@ -182,3 +182,5 @@ wandb/
 # Distributed leaning
 hostfile.txt
 .deepspeed_env
+
+w2f6/
