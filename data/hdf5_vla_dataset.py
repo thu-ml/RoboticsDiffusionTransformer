@@ -140,7 +140,7 @@ class HDF5VLADataset:
                 raise ValueError("Found no qpos that exceeds the threshold.")
             
             # We randomly sample a timestep
-            step_id = np.random.randint(first_idx-1, num_steps)
+            step_id = np.random.randint(first_idx-1, num_steps-1)
 
             # Load the instruction
             # dir_path = os.path.dirname(file_path)
@@ -168,7 +168,7 @@ class HDF5VLADataset:
                 "instruction": instruction
             }
 
-            target_qpos = qpos[1:self.CHUNK_SIZE+1]
+            target_qpos = qpos[step_id:step_id+self.CHUNK_SIZE]
             
             # Parse the state and action
             state = qpos[step_id:step_id+1]
