@@ -9,16 +9,16 @@
 #SBATCH --error=%j.error
 
 # Multi-GPU related environment variables, unset them if you are not using multi-GPU
-# export NCCL_IB_HCA=mlx5_0:1,mlx5_1:1,mlx5_2:1,mlx5_3:1,mlx5_4:1,mlx5_7:1,mlx5_8:1,mlx5_9:1
-# export NCCL_IB_DISABLE=0
-# export NCCL_SOCKET_IFNAME=bond0
-# export NCCL_DEBUG=INFO
-# export NCCL_NVLS_ENABLE=0
-unset NCCL_IB_HCA
-unset NCCL_IB_DISABLE
-unset NCCL_SOCKET_IFNAME
-unset NCCL_DEBUG
-unset NCCL_NVLS_ENABLE
+export NCCL_IB_HCA=mlx5_0:1,mlx5_1:1,mlx5_2:1,mlx5_3:1,mlx5_4:1,mlx5_7:1,mlx5_8:1,mlx5_9:1
+export NCCL_IB_DISABLE=0
+export NCCL_SOCKET_IFNAME=bond0
+export NCCL_DEBUG=INFO
+export NCCL_NVLS_ENABLE=0
+# unset NCCL_IB_HCA
+# unset NCCL_IB_DISABLE
+# unset NCCL_SOCKET_IFNAME
+# unset NCCL_DEBUG
+# unset NCCL_NVLS_ENABLE
 
 # Activate your conda environment first
 source ~/.bashrc
@@ -32,7 +32,7 @@ nvcc -V
 # Finetune the RDT model
 export TEXT_ENCODER_NAME="google/t5-v1_1-xxl"
 export VISION_ENCODER_NAME="google/siglip-so400m-patch14-384"
-export OUTPUT_DIR="./checkpoints/rdt-finetune-1b"
+export OUTPUT_DIR="./checkpoints/rdt-airbot500"
 export CFLAGS="-I/usr/include"
 export LDFLAGS="-L/usr/lib/x86_64-linux-gnu"
 export CUTLASS_PATH="/hpc2hdd/home/yzhu714/cutlass"
