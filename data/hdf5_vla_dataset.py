@@ -113,16 +113,18 @@ class HDF5VLADataset:
                 } or None if the episode is invalid.
         """
         with h5py.File(file_path, 'r') as f:
-            qpos = f['observations']['qpos'][:]
-            num_steps = qpos.shape[0]
+            # qpos = f['observations']['qpos'][:]
+            # num_steps = qpos.shape[0]
+            eef_9d = f['observations']['eef_9d'][:]
+            num_steps = eef_9d.shape[0]
             # [Optional] We drop too-short episode
-            if num_steps < 128:
+            if num_steps < 32:
                 return False, None
             
             # [Optional] We skip the first few still steps
             EPS = 1e-2
             # Get the idx of the first qpos whose delta exceeds the threshold
-            qpos_delta = np.abs(qpos - qpos[0:1])
+            qpos_delta = np.abs(eef_9d - eef_9d[0:1])
             indices = np.where(np.any(qpos_delta > EPS, axis=1))[0]
             if len(indices) > 0:
                 first_idx = indices[0]
@@ -133,19 +135,19 @@ class HDF5VLADataset:
             step_id = np.random.randint(first_idx-1, num_steps)
             
             # Load the instruction
-            dir_path = os.path.dirname(file_path)
-            with open(os.path.join(dir_path, 'expanded_instruction_gpt-4-turbo.json'), 'r') as f_instr:
-                instruction_dict = json.load(f_instr)
+            # dir_path = os.path.dirname(file_path)
+            # with open(os.path.join(dir_path, 'expanded_instruction_gpt-4-turbo.json'), 'r') as f_instr:
+            #     instruction_dict = json.load(f_instr)
             # We have 1/3 prob to use original instruction,
             # 1/3 to use simplified instruction,
             # and 1/3 to use expanded instruction.
-            instruction_type = np.random.choice([
-                'instruction', 'simplified_instruction', 'expanded_instruction'])
-            instruction = instruction_dict[instruction_type]
-            if isinstance(instruction, list):
-                instruction = np.random.choice(instruction)
+            # instruction_type = np.random.choice([
+            #     'instruction', 'simplified_instruction', 'expanded_instruction'])
+            # instruction = instruction_dict[instruction_type]
+            # if isinstance(instruction, list):
+            #     instruction = np.random.choice(instruction)
             # You can also use precomputed language embeddings (recommended)
-            # instruction = "path/to/lang_embed.pt"
+            instruction = "path/to/lang_embed.pt"
             
             # Assemble the meta
             meta = {
@@ -156,19 +158,21 @@ class HDF5VLADataset:
             }
             
             # Rescale gripper to [0, 1]
-            qpos = qpos / np.array(
-               [[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]] 
-            )
-            target_qpos = f['action'][step_id:step_id+self.CHUNK_SIZE] / np.array(
-               [[1, 1, 1, 1, 1, 1, 11.8997, 1, 1, 1, 1, 1, 1, 13.9231]] 
-            )
+            # qpos = qpos / np.array(
+            #    [[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]] 
+            # )
+            # target_qpos = f['action'][step_id:step_id+self.CHUNK_SIZE] / np.array(
+            #    [[1, 1, 1, 1, 1, 1, 11.8997, 1, 1, 1, 1, 1, 1, 13.9231]] 
+            # )
+            # Kinova doesn't need to scale
+            target_eef = f['action'][step_id:step_id+self.CHUNK_SIZE]
             
             # Parse the state and action
-            state = qpos[step_id:step_id+1]
-            state_std = np.std(qpos, axis=0)
-            state_mean = np.mean(qpos, axis=0)
-            state_norm = np.sqrt(np.mean(qpos**2, axis=0))
-            actions = target_qpos
+            state = eef_9d[step_id:step_id+1]
+            state_std = np.std(eef_9d, axis=0)
+            state_mean = np.mean(eef_9d, axis=0)
+            state_norm = np.sqrt(np.mean(eef_9d**2, axis=0))
+            actions = target_eef
             if actions.shape[0] < self.CHUNK_SIZE:
                 # Pad the actions using the last action
                 actions = np.concatenate([
@@ -180,13 +184,20 @@ class HDF5VLADataset:
             def fill_in_state(values):
                 # Target indices corresponding to your state space
                 # In this example: 6 joints + 1 gripper for each arm
+                # UNI_STATE_INDICES = [
+                #     STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
+                # ] + [
+                #     STATE_VEC_IDX_MAPPING["left_gripper_open"]
+                # ] + [
+                #     STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
+                # ] + [
+                #     STATE_VEC_IDX_MAPPING["right_gripper_open"]
+                # ]
                 UNI_STATE_INDICES = [
-                    STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
+                    STATE_VEC_IDX_MAPPING[f"right_eef_pos_{i}"] for i in 'xyz'
                 ] + [
-                    STATE_VEC_IDX_MAPPING["left_gripper_open"]
-                ] + [
-                    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
-                ] + [
+                    STATE_VEC_IDX_MAPPING[f"right_eef_angle_{i}"] for i in range(6)
+                ] +[
                     STATE_VEC_IDX_MAPPING["right_gripper_open"]
                 ]
                 uni_vec = np.zeros(values.shape[:-1] + (self.STATE_DIM,))
@@ -263,16 +274,18 @@ class HDF5VLADataset:
                 } or None if the episode is invalid.
         """
         with h5py.File(file_path, 'r') as f:
-            qpos = f['observations']['qpos'][:]
-            num_steps = qpos.shape[0]
+            # qpos = f['observations']['qpos'][:]
+            # num_steps = qpos.shape[0]
+            eef_9d = f['observations']['eef_9d'][:]
+            num_steps = eef_9d.shape[0]
             # [Optional] We drop too-short episode
-            if num_steps < 128:
+            if num_steps < 32:
                 return False, None
             
             # [Optional] We skip the first few still steps
             EPS = 1e-2
             # Get the idx of the first qpos whose delta exceeds the threshold
-            qpos_delta = np.abs(qpos - qpos[0:1])
+            qpos_delta = np.abs(eef_9d - eef_9d[0:1])
             indices = np.where(np.any(qpos_delta > EPS, axis=1))[0]
             if len(indices) > 0:
                 first_idx = indices[0]
@@ -280,27 +293,36 @@ class HDF5VLADataset:
                 raise ValueError("Found no qpos that exceeds the threshold.")
             
             # Rescale gripper to [0, 1]
-            qpos = qpos / np.array(
-               [[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]] 
-            )
-            target_qpos = f['action'][:] / np.array(
-               [[1, 1, 1, 1, 1, 1, 11.8997, 1, 1, 1, 1, 1, 1, 13.9231]] 
-            )
+            # qpos = qpos / np.array(
+            #    [[1, 1, 1, 1, 1, 1, 4.7908, 1, 1, 1, 1, 1, 1, 4.7888]] 
+            # )
+            # target_qpos = f['action'][:] / np.array(
+            #    [[1, 1, 1, 1, 1, 1, 11.8997, 1, 1, 1, 1, 1, 1, 13.9231]] 
+            # )
+            # Kinova doesn't need to scale
+            target_eef = f['action'][:]
             
             # Parse the state and action
-            state = qpos[first_idx-1:]
-            action = target_qpos[first_idx-1:]
+            state = eef_9d[first_idx-1:]
+            action = target_eef[first_idx-1:]
             
             # Fill the state/action into the unified vector
             def fill_in_state(values):
                 # Target indices corresponding to your state space
                 # In this example: 6 joints + 1 gripper for each arm
+                # UNI_STATE_INDICES = [
+                #     STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
+                # ] + [
+                #     STATE_VEC_IDX_MAPPING["left_gripper_open"]
+                # ] + [
+                #     STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
+                # ] + [
+                #     STATE_VEC_IDX_MAPPING["right_gripper_open"]
+                # ]
                 UNI_STATE_INDICES = [
-                    STATE_VEC_IDX_MAPPING[f"left_arm_joint_{i}_pos"] for i in range(6)
+                    STATE_VEC_IDX_MAPPING[f"right_eef_pos_{i}"] for i in 'xyz'
                 ] + [
-                    STATE_VEC_IDX_MAPPING["left_gripper_open"]
-                ] + [
-                    STATE_VEC_IDX_MAPPING[f"right_arm_joint_{i}_pos"] for i in range(6)
+                    STATE_VEC_IDX_MAPPING[f"right_eef_angle_{i}"] for i in range(6)
                 ] + [
                     STATE_VEC_IDX_MAPPING["right_gripper_open"]
                 ]

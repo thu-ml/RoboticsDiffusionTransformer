@@ -24,6 +24,7 @@ import torch
 import torch.utils.checkpoint
 import transformers
 import yaml
+from torch.cuda.amp import autocast
 from accelerate import Accelerator
 from accelerate.utils import DeepSpeedPlugin, ProjectConfiguration, set_seed
 from diffusers.optimization import get_scheduler
@@ -457,17 +458,18 @@ def train(args, logger):
                     logger.info(f"Saved state to {save_path}")
 
                 if args.sample_period > 0 and global_step % args.sample_period == 0:
-                    sample_loss_for_log = log_sample_res(
-                        text_encoder,
-                        vision_encoder,
-                        rdt,    # We do not use EMA currently
-                        args,
-                        accelerator,
-                        weight_dtype,
-                        sample_dataset.get_dataset_id2name(),
-                        sample_dataloader,
-                        logger,
-                    )
+                    with autocast():
+                        sample_loss_for_log = log_sample_res(
+                            text_encoder,
+                            vision_encoder,
+                            rdt,    # We do not use EMA currently
+                            args,
+                            accelerator,
+                            weight_dtype,
+                            sample_dataset.get_dataset_id2name(),
+                            sample_dataloader,
+                            logger,
+                        )
                     logger.info(sample_loss_for_log)
                     accelerator.log(sample_loss_for_log, step=global_step)
 
