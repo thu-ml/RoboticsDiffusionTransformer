@@ -186,6 +186,8 @@ If your fine-tuning dataset is in the [Open X-Embodiment](https://robotics-trans
 
    Note 3: If the training oscillates, you can increase the batch size by adding more GPUs or setting a larger `--gradient_accumulation_steps`.
 
+   Note 4: Please specify `--load_from_hdf5` in your script when finetuning with an HDF5 dataset.
+
 ## Deployment on Real-Robots
 
 We have encapsulated the inference of the model into a class named `RoboticDiffusionTransformerModel` (see [this file](scripts/agilex_model.py#L38)). You can call this class's `step()` method for inference. However, you may need to re-implement some parts according to your specific robot. You should at least modify the `_format_joint_to_state()` (L164) and `_unformat_action_to_joint()` (L196) to convert between robot raw actions and unified action vectors that RDT accepts. You may also specify the control frequency of your robot (L49).
