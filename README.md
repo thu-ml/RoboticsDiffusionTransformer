@@ -311,6 +311,12 @@ python -m eval_sim.eval_octo --pretrained_path PATH_TO_PRETRAINED_MODEL
 python -m eval_sim.eval_dp --pretrained_path PATH_TO_PRETRAINED_MODEL
 ```
 
+### RDT on [RoboTwin Benchmark](https://robotwin-platform.github.io/) 
+
+RoboTwin is a benchmark simulator based on Sapien, comprising 50 common dual-arm tasks. All policies are trained on 50 trajectories collected in a clean environment for each of the 50 tasks, and then deployed and tested for success rates in environments corresponding to either easy (clean) or hard (randomized) configurations for the same 50 tasks. You can refer to ​​[https://robotwin-platform.github.io/doc/usage/RDT.html#1-environment-setup](https://robotwin-platform.github.io/doc/usage/RDT.html#1-environment-setup)​​ to set up the environment required for RoboTwin and RDT. According to the official test results of RoboTwin ([RoboTwin 2.0 Leaderboard](https://robotwin-platform.github.io/leaderboard)), RDT ranks second only to Pi0 (excluding the DP3 policy, which utilizes ground truth point clouds).
+<img width="2048" height="1224" alt="image" src="https://github.com/user-attachments/assets/e721ffab-3dde-42f0-b36e-1593aa964a99" />
+
+
 ## FAQ
 
 ### 1. How can I fine-tune RDTs with limited VRAM?
