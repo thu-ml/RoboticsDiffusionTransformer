@@ -188,6 +188,13 @@ def train(args, logger):
         max_value=config["model"]["ema"]["max_value"]
     )
 
+    def save_ema(output_dir):
+        accelerator.save_model(ema_rdt, output_dir)
+        accelerator.save(
+            ema_model.schedule_state_dict(),
+            os.path.join(output_dir, "ema_state.pt"),
+        )
+
     # create custom saving & loading hooks so that `accelerator.save_state(...)` serializes in a nice format
     # which ensure saving model in huggingface format (config.json + pytorch_model.bin)
     def save_model_hook(models, weights, output_dir):
@@ -381,6 +388,17 @@ def train(args, logger):
                 
             load_model(ema_rdt, os.path.join(args.output_dir, path, "ema", "model.safetensors"))
             global_step = int(path.split("-")[1])
+            ema_state_path = os.path.join(args.output_dir, path, "ema", "ema_state.pt")
+            if os.path.isfile(ema_state_path):
+                ema_model.load_schedule_state_dict(
+                    torch.load(ema_state_path, map_location="cpu")
+                )
+            else:
+                # Older checkpoints did not persist the EMA schedule separately.
+                logger.warning(
+                    "EMA schedule state not found; restoring it from global_step."
+                )
+                ema_model.set_optimization_step(global_step)
 
             resume_global_step = global_step * args.gradient_accumulation_steps
             first_epoch = global_step // num_update_steps_per_epoch
@@ -441,10 +459,14 @@ def train(args, logger):
                 optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad(set_to_none=args.set_grads_to_none)
-            
-            ema_model.step(accelerator.unwrap_model(rdt))
 
-            # Checks if the accelerator has performed an optimization step behind the scenes
+            ema_model.step_if_optimizer_updated(
+                accelerator.unwrap_model(rdt),
+                sync_gradients=accelerator.sync_gradients,
+                optimizer_step_was_skipped=accelerator.optimizer_step_was_skipped,
+            )
+
+            # Keep global_step aligned with consumed gradient-accumulation boundaries.
             if accelerator.sync_gradients:
                 progress_bar.update(1)
                 global_step += 1
@@ -453,7 +475,7 @@ def train(args, logger):
                     save_path = os.path.join(args.output_dir, f"checkpoint-{global_step}")
                     accelerator.save_state(save_path)
                     ema_save_path = os.path.join(save_path, f"ema")
-                    accelerator.save_model(ema_rdt, ema_save_path)
+                    save_ema(ema_save_path)
                     logger.info(f"Saved state to {save_path}")
 
                 if args.sample_period > 0 and global_step % args.sample_period == 0:
@@ -485,7 +507,7 @@ def train(args, logger):
     if accelerator.is_main_process:
         accelerator.unwrap_model(rdt).save_pretrained(args.output_dir)
         ema_save_path = os.path.join(args.output_dir, f"ema")
-        accelerator.save_model(ema_rdt, ema_save_path)
+        save_ema(ema_save_path)
         
         logger.info(f"Saved Model to {args.output_dir}")
 
