@@ -54,6 +54,35 @@ class EMAModel:
 
         return max(self.min_value, min(value, self.max_value))
 
+    def set_optimization_step(self, optimization_step):
+        """Restore the number of completed optimizer updates."""
+        if isinstance(optimization_step, bool) or not isinstance(
+            optimization_step, int
+        ):
+            raise TypeError("optimization_step must be an integer")
+        if optimization_step < 0:
+            raise ValueError("optimization_step must be non-negative")
+        self.optimization_step = optimization_step
+
+    def schedule_state_dict(self):
+        """Return the EMA schedule state stored alongside averaged weights."""
+        return {"optimization_step": self.optimization_step}
+
+    def load_schedule_state_dict(self, state_dict):
+        """Restore the EMA schedule state stored alongside averaged weights."""
+        if "optimization_step" not in state_dict:
+            raise KeyError("EMA schedule state is missing optimization_step")
+        self.set_optimization_step(state_dict["optimization_step"])
+
+    def step_if_optimizer_updated(
+        self, new_model, *, sync_gradients, optimizer_step_was_skipped
+    ):
+        """Update the EMA only after a successful optimizer update."""
+        if not sync_gradients or optimizer_step_was_skipped:
+            return False
+        self.step(new_model)
+        return True
+
     @torch.no_grad()
     def step(self, new_model):
         self.decay = self.get_decay(self.optimization_step)
