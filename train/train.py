@@ -460,14 +460,22 @@ def train(args, logger):
                 lr_scheduler.step()
                 optimizer.zero_grad(set_to_none=args.set_grads_to_none)
 
+            # Accelerate can skip an optimizer update when GradScaler detects an
+            # overflow.  Treat that boundary as a consumed micro-batch, but do
+            # not advance training/EMA schedules until parameters really moved.
+            optimizer_step_was_skipped = accelerator.optimizer_step_was_skipped
+            optimizer_step_completed = (
+                accelerator.sync_gradients and not optimizer_step_was_skipped
+            )
             ema_model.step_if_optimizer_updated(
                 accelerator.unwrap_model(rdt),
                 sync_gradients=accelerator.sync_gradients,
-                optimizer_step_was_skipped=accelerator.optimizer_step_was_skipped,
+                optimizer_step_was_skipped=optimizer_step_was_skipped,
             )
 
-            # Keep global_step aligned with consumed gradient-accumulation boundaries.
-            if accelerator.sync_gradients:
+            # Keep global_step aligned with completed optimizer updates rather
+            # than gradient-accumulation boundaries that were skipped.
+            if optimizer_step_completed:
                 progress_bar.update(1)
                 global_step += 1
 
