@@ -7,6 +7,7 @@ from mani_skill.envs.sapien_env import BaseEnv
 from mani_skill.utils import common, gym_utils
 import argparse
 import yaml
+from models.device import manual_seed
 from scripts.maniskill_model import create_model, RoboticDiffusionTransformerModel
 import torch
 from collections import deque
@@ -26,6 +27,7 @@ def parse_args(args=None):
     parser.add_argument("--num-procs", type=int, default=1, help="Number of processes to use to help parallelize the trajectory replay process. This uses CPU multiprocessing and only works with the CPU simulation backend at the moment.")
     parser.add_argument("--pretrained_path", type=str, default=None, help="Path to the pretrained model")
     parser.add_argument("--random_seed", type=int, default=0, help="Random seed for the environment.")
+    parser.add_argument("--device", type=str, default=None, help="Device for the policy, for example cuda:0 or xpu:0. Defaults to the best available backend (XPU, then CUDA, then CPU).")
     return parser.parse_args()
 
 import random
@@ -39,7 +41,7 @@ random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
+manual_seed(seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
@@ -72,6 +74,7 @@ pretrained_vision_encoder_name_or_path = "google/siglip-so400m-patch14-384"
 pretrained_path = args.pretrained_path
 policy = create_model(
     args=config, 
+    device=args.device,
     dtype=torch.bfloat16,
     pretrained=pretrained_path,
     pretrained_text_encoder_name_or_path=pretrained_text_encoder_name_or_path,

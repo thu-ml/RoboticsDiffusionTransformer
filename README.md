@@ -81,6 +81,24 @@ The following guides include the [installation](#installation), [fine-tuning](#f
    # ...
    ```
 
+### How to run the same on Intel's XPU
+
+Skip the CUDA wheel and the flash-attn lines of step 1 (the code does not import flash-attn, attention uses PyTorch SDPA). Install the XPU wheel instead, then the requirements without the pinned CUDA-era versions or `deepspeed`:
+
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/xpu
+pip install packaging timm diffusers transformers accelerate sentencepiece h5py pyyaml
+```
+
+The same deployment command runs on XPU. `--device` defaults to the best backend found (XPU, then CUDA, then CPU); pass it to pick a card:
+
+```bash
+python -m scripts.agilex_inference --pretrained_model_name_or_path=<PATH TO MODEL CHECKPOINT> \
+   --lang_embeddings_path=<PATH TO YOUR INSTURCTION EMBEDDINGS> --ctrl_freq=25 --device xpu:0
+```
+
+Training with `accelerate` picks the XPU on its own. `--deepspeed`, `--use_8bit_adam` (bitsandbytes), the ManiSkill GPU simulation backend and the baseline scripts under `eval_sim/` (Diffusion Policy, Octo, OpenVLA) stay CUDA-only.
+
 ## Fine-Tuning on Your Own Dataset
 
 If your fine-tuning dataset is in the [Open X-Embodiment](https://robotics-transformer-x.github.io/) or the collection of our pre-training datasets (see [this doc](docs/pretrain.md#download-and-prepare-datasets)), you can also fine-tune RDT through the pre-trained pipeline. You need to remove other redundant datasets in the parameters. We refer to [this guide](docs/pretrain.md) (pre-training).

@@ -46,6 +46,7 @@ def make_policy(args):
     pretrained_vision_encoder_name_or_path = "google/siglip-so400m-patch14-384"
     model = create_model(
         args=args.config, 
+        device=args.device,
         dtype=torch.bfloat16,
         pretrained=args.pretrained_model_name_or_path,
         # pretrained_text_encoder_name_or_path=pretrained_text_encoder_name_or_path,
@@ -137,7 +138,8 @@ def update_observation_window(args, config, ros_operator):
     
     qpos = np.concatenate(
             (np.array(puppet_arm_left.position), np.array(puppet_arm_right.position)), axis=0)
-    qpos = torch.from_numpy(qpos).float().cuda()
+    # policy.step moves the proprioception to the device of the model
+    qpos = torch.from_numpy(qpos).float()
     observation_window.append(
         {
             'qpos': qpos,
@@ -632,6 +634,9 @@ def get_arguments():
     parser.add_argument('--disable_puppet_arm', action='store_true',
                         help='Whether to disable the puppet arm. This is useful for safely debugging',default=False)
     
+    parser.add_argument('--device', type=str, default=None,
+                        help='Device for the policy, for example cuda:0 or xpu:0. '
+                             'Defaults to the best available backend (XPU, then CUDA, then CPU)')
     parser.add_argument('--config_path', type=str, default="configs/base.yaml", 
                         help='Path to the config file')
     # parser.add_argument('--cfg_scale', type=float, default=2.0,

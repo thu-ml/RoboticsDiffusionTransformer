@@ -3,6 +3,8 @@ from collections import defaultdict
 import torch
 import torch.nn.functional as F
 
+from models.device import empty_cache
+
 
 @torch.no_grad()
 def log_sample_res(
@@ -93,6 +95,6 @@ def log_sample_res(
             loss_for_log[name] = round(loss_for_log[name] / loss_counter[name], 4)
     
     rdt.train()
-    torch.cuda.empty_cache()
+    empty_cache(pred_actions.device)
 
     return dict(loss_for_log)

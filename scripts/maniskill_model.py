@@ -6,6 +6,7 @@ from PIL import Image
 from torchvision import transforms
 
 from configs.state_vec import STATE_VEC_IDX_MAPPING
+from models.device import resolve_device
 from models.multimodal_encoder.siglip_encoder import SiglipVisionTower
 from models.multimodal_encoder.t5_encoder import T5Embedder
 from models.rdt_runner import RDTRunner
@@ -35,7 +36,7 @@ class RoboticDiffusionTransformerModel(object):
     """
     def __init__(
         self, args, 
-        device='cuda',
+        device=None,
         dtype=torch.bfloat16,
         image_size=None,
         control_frequency=25,
@@ -45,16 +46,17 @@ class RoboticDiffusionTransformerModel(object):
         self.args = args
         self.dtype = dtype
         self.image_size = image_size
-        self.device = device
+        # None picks the best backend (XPU, then CUDA, then CPU)
+        self.device = resolve_device(device)
         self.control_frequency = control_frequency
         self.text_tokenizer, self.text_model = self.get_text_encoder(pretrained_text_encoder_name_or_path)
         self.image_processor, self.vision_model = self.get_vision_encoder(pretrained_vision_encoder_name_or_path)
         self.policy = self.get_policy()
 
-        self.state_min = torch.tensor(DATA_STAT['state_min']).to(device)
-        self.state_max = torch.tensor(DATA_STAT['state_max']).to(device)
-        self.action_min = torch.tensor(DATA_STAT['action_min']).to(device)
-        self.action_max = torch.tensor(DATA_STAT['action_max']).to(device)
+        self.state_min = torch.tensor(DATA_STAT['state_min']).to(self.device)
+        self.state_max = torch.tensor(DATA_STAT['state_max']).to(self.device)
+        self.action_min = torch.tensor(DATA_STAT['action_min']).to(self.device)
+        self.action_max = torch.tensor(DATA_STAT['action_max']).to(self.device)
 
         self.reset()
 
@@ -129,16 +131,17 @@ class RoboticDiffusionTransformerModel(object):
         else:
             raise NotImplementedError(f"Unknown checkpoint format: {pretrained}")
 
-    def encode_instruction(self, instruction, device="cuda"):
+    def encode_instruction(self, instruction, device=None):
         """Encode string instruction to latent embeddings.
 
         Args:
             instruction: a string of instruction
-            device: a string of device
+            device: a string of device, defaults to the device of the model
         
         Returns:
             pred: a tensor of latent embeddings of shape (text_max_length, 512)
         """
+        device = self.device if device is None else resolve_device(device)
         tokens = self.text_tokenizer(
             instruction, return_tensors="pt",
             padding="longest",

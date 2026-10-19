@@ -5,6 +5,7 @@ import torch
 import yaml
 from tqdm import tqdm
 
+from models.device import default_device
 from models.multimodal_encoder.t5_encoder import T5Embedder
 
 
@@ -22,7 +23,8 @@ def main():
     with open(CONFIG_PATH, "r") as fp:
         config = yaml.safe_load(fp)
     
-    device = torch.device(f"cuda:{GPU}")
+    # GPU is the device index; the backend is detected (XPU, then CUDA, then CPU)
+    device = default_device(GPU)
     text_embedder = T5Embedder(
         from_pretrained=MODEL_PATH, 
         model_max_length=config["dataset"]["tokenizer_max_length"], 
