@@ -29,15 +29,22 @@ class CompatiblePyTorchModelHubMixin(PyTorchModelHubMixin):
         revision: Optional[str],
         cache_dir: Optional[Union[str, Path]],
         force_download: bool,
-        proxies: Optional[Dict],
-        resume_download: Optional[bool],
         local_files_only: bool,
         token: Union[str, bool, None],
         map_location: str = "cpu",
         strict: bool = False,
+        proxies: Optional[Dict] = None,
+        resume_download: Optional[bool] = None,
         **model_kwargs,
     ):
         """Load Pytorch pretrained weights and return the loaded model."""
+        # huggingface_hub 1.x no longer passes proxies and resume_download to this method
+        # and its hf_hub_download no longer accepts them, so forward them only when given.
+        download_kwargs = {}
+        if proxies is not None:
+            download_kwargs["proxies"] = proxies
+        if resume_download is not None:
+            download_kwargs["resume_download"] = resume_download
         model = cls(**model_kwargs)
         if os.path.isdir(model_id):
             print("Loading weights from local directory")
@@ -55,8 +62,7 @@ class CompatiblePyTorchModelHubMixin(PyTorchModelHubMixin):
                     revision=revision,
                     cache_dir=cache_dir,
                     force_download=force_download,
-                    proxies=proxies,
-                    resume_download=resume_download,
+                    **download_kwargs,
                     token=token,
                     local_files_only=local_files_only,
                 )
@@ -68,8 +74,7 @@ class CompatiblePyTorchModelHubMixin(PyTorchModelHubMixin):
                     revision=revision,
                     cache_dir=cache_dir,
                     force_download=force_download,
-                    proxies=proxies,
-                    resume_download=resume_download,
+                    **download_kwargs,
                     token=token,
                     local_files_only=local_files_only,
                 )
