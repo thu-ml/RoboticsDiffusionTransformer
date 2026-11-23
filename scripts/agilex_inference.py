@@ -22,6 +22,7 @@ from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import Header
 import cv2
 
+from models.device_utils import get_default_device
 from scripts.agilex_model import create_model
 
 # sys.path.append("./")
@@ -137,7 +138,7 @@ def update_observation_window(args, config, ros_operator):
     
     qpos = np.concatenate(
             (np.array(puppet_arm_left.position), np.array(puppet_arm_right.position)), axis=0)
-    qpos = torch.from_numpy(qpos).float().cuda()
+    qpos = torch.from_numpy(qpos).float().to(get_default_device())
     observation_window.append(
         {
             'qpos': qpos,
@@ -217,7 +218,7 @@ def model_inference(args, config, ros_operator):
     # Load rdt model
     policy = make_policy(args)
     
-    lang_dict = torch.load(args.lang_embeddings_path)
+    lang_dict = torch.load(args.lang_embeddings_path, map_location="cpu")
     print(f"Running with instruction: \"{lang_dict['instruction']}\" from \"{lang_dict['name']}\"")
     lang_embeddings = lang_dict["embeddings"]
     

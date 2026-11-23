@@ -81,6 +81,25 @@ The following guides include the [installation](#installation), [fine-tuning](#f
    # ...
    ```
 
+### Run on Intel GPU (XPU)
+
+Inference also runs on Intel GPUs through PyTorch's XPU backend (Python 3.11 or newer). Install PyTorch for XPU and the inference requirements instead of step 1 above:
+
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/xpu
+pip install -r requirements-xpu.txt
+```
+
+The inference scripts (`scripts/agilex_model.py`, `scripts/maniskill_model.py`, `scripts/encode_lang.py`) use CUDA when it is available, then XPU, then the CPU. The ManiSkill evaluation also takes `--device`:
+
+```bash
+python -m eval_sim.eval_rdt_maniskill --pretrained_path PATH_TO_PRETRAINED_MODEL --device xpu
+```
+
+If SAPIEN cannot create a Vulkan device on the Intel GPU (`ErrorFeatureNotPresent`), render with Mesa's CPU driver instead: `export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json`.
+
+This covers inference only: training (`main.py`, DeepSpeed, flash-attn) is unchanged.
+
 ## Fine-Tuning on Your Own Dataset
 
 If your fine-tuning dataset is in the [Open X-Embodiment](https://robotics-transformer-x.github.io/) or the collection of our pre-training datasets (see [this doc](docs/pretrain.md#download-and-prepare-datasets)), you can also fine-tune RDT through the pre-trained pipeline. You need to remove other redundant datasets in the parameters. We refer to [this guide](docs/pretrain.md) (pre-training).
