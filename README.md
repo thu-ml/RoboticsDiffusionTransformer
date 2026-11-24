@@ -83,7 +83,7 @@ The following guides include the [installation](#installation), [fine-tuning](#f
 
 ### Run on Intel GPU (XPU)
 
-Inference also runs on Intel GPUs through PyTorch's XPU backend (Python 3.11 or newer). PyTorch supports Intel Arc A-Series and B-Series Graphics, Intel Core Ultra processors with Intel Arc Graphics, and the Intel Data Center GPU Max Series; see [Getting Started on Intel GPU](https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html) for the validated list. These steps were checked on an Intel Core Ultra X7 Processor 358H (Intel Core Ultra Series 3) with its integrated Intel Arc B390 GPU. Install PyTorch for XPU and the inference requirements instead of step 1 above:
+Inference also runs on Intel GPUs through PyTorch's XPU backend (Python 3.11 or newer).
 
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/xpu
