@@ -96,7 +96,7 @@ The inference scripts (`scripts/agilex_model.py`, `scripts/maniskill_model.py`, 
 python -m eval_sim.eval_rdt_maniskill --pretrained_path PATH_TO_PRETRAINED_MODEL --device xpu
 ```
 
-If SAPIEN cannot create a Vulkan device on the GPU (`ErrorFeatureNotPresent`, seen on the Intel Arc B390 GPU of the Intel Core Ultra X7 Processor 358H), render with Mesa's CPU driver instead: `export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json`.
+If SAPIEN cannot create a Vulkan device on the GPU, render with Mesa's CPU driver instead: `export VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json`.
 
 This covers inference only: training (`main.py`, DeepSpeed, flash-attn) is unchanged.
 
