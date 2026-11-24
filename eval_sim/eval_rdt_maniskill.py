@@ -26,6 +26,7 @@ def parse_args(args=None):
     parser.add_argument("--num-procs", type=int, default=1, help="Number of processes to use to help parallelize the trajectory replay process. This uses CPU multiprocessing and only works with the CPU simulation backend at the moment.")
     parser.add_argument("--pretrained_path", type=str, default=None, help="Path to the pretrained model")
     parser.add_argument("--random_seed", type=int, default=0, help="Random seed for the environment.")
+    parser.add_argument("--device", type=str, default=None, help="Device for the model, e.g. cuda, xpu or cpu. Default: CUDA if available, then XPU, then CPU.")
     return parser.parse_args()
 
 import random
@@ -74,12 +75,13 @@ policy = create_model(
     args=config, 
     dtype=torch.bfloat16,
     pretrained=pretrained_path,
+    device=args.device,
     pretrained_text_encoder_name_or_path=pretrained_text_encoder_name_or_path,
     pretrained_vision_encoder_name_or_path=pretrained_vision_encoder_name_or_path
 )
 
 if os.path.exists(f'text_embed_{env_id}.pt'):
-    text_embed = torch.load(f'text_embed_{env_id}.pt')
+    text_embed = torch.load(f'text_embed_{env_id}.pt', map_location="cpu")
 else:
     text_embed = policy.encode_instruction(task2lang[env_id])
     torch.save(text_embed, f'text_embed_{env_id}.pt')

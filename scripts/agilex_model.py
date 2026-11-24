@@ -6,6 +6,7 @@ from PIL import Image
 from torchvision import transforms
 
 from configs.state_vec import STATE_VEC_IDX_MAPPING
+from models.device_utils import get_default_device
 from models.multimodal_encoder.siglip_encoder import SiglipVisionTower
 from models.multimodal_encoder.t5_encoder import T5Embedder
 from models.rdt_runner import RDTRunner
@@ -43,13 +44,15 @@ class RoboticDiffusionTransformerModel(object):
     """
     def __init__(
         self, args, 
-        device='cuda',
+        device=None,
         dtype=torch.bfloat16,
         image_size=None,
         control_frequency=25,
         pretrained=None,
         pretrained_vision_encoder_name_or_path=None,
     ):
+        if device is None:
+            device = get_default_device()
         self.args = args
         self.dtype = dtype
         self.image_size = image_size
@@ -131,7 +134,7 @@ class RoboticDiffusionTransformerModel(object):
         print(f'Loading weights from {pretrained}')
         filename = os.path.basename(pretrained)
         if filename.endswith('.pt'):
-            checkpoint =  torch.load(pretrained)
+            checkpoint =  torch.load(pretrained, map_location="cpu")
             self.policy.load_state_dict(checkpoint["module"])
         elif filename.endswith('.safetensors'):
             from safetensors.torch import load_model
@@ -139,16 +142,18 @@ class RoboticDiffusionTransformerModel(object):
         else:
             raise NotImplementedError(f"Unknown checkpoint format: {pretrained}")
 
-    def encode_instruction(self, instruction, device="cuda"):
+    def encode_instruction(self, instruction, device=None):
         """Encode string instruction to latent embeddings.
 
         Args:
             instruction: a string of instruction
-            device: a string of device
+            device: a string of device (default: the model's device)
         
         Returns:
             pred: a tensor of latent embeddings of shape (text_max_length, 512)
         """
+        if device is None:
+            device = self.device
         tokens = self.text_tokenizer(
             instruction, return_tensors="pt",
             padding="longest",
